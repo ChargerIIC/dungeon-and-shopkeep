@@ -7,6 +7,7 @@ import { Column } from 'primereact/column';
 import { RadioButton } from 'primereact/radiobutton';
 import { Dialog } from 'primereact/dialog';
 import { useAuth } from '../services/AuthProvider';
+import { useTheme, ThemeType } from '../services/ThemeContext';
 
 interface Item {
   id: string;
@@ -18,7 +19,7 @@ interface Item {
 const ShopkeeperApp: React.FC = () => {
   const [shopName, setShopName] = useState<string>('');
   const [items, setItems] = useState<Item[]>([]);
-  const [selectedTheme, setSelectedTheme] = useState<string>('lara-light-indigo');
+  const { theme, setTheme } = useTheme();
   const [showAddItemDialog, setShowAddItemDialog] = useState<boolean>(false);
   const [newItem, setNewItem] = useState<Partial<Item>>({});
   const { user } = useAuth();
@@ -35,21 +36,12 @@ const ShopkeeperApp: React.FC = () => {
       setItems(JSON.parse(savedItems));
     }
 
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      setSelectedTheme(savedTheme);
-      // Apply theme change
-      const currentTheme = document.getElementById('theme-link');
-      if (currentTheme) {
-        currentTheme.setAttribute('href', `primereact/resources/themes/${savedTheme}/theme.css`);
-      }
-    }
+    // Theme is managed by ThemeContext
   }, []);
 
   const saveData = () => {
     localStorage.setItem('shopName', shopName);
     localStorage.setItem('items', JSON.stringify(items));
-    localStorage.setItem('theme', selectedTheme);
   };
 
   const handleAddItem = () => {
@@ -72,13 +64,8 @@ const ShopkeeperApp: React.FC = () => {
     saveData();
   };
 
-  const handleThemeChange = (theme: string) => {
-    setSelectedTheme(theme);
-    const link = document.getElementById('theme-link');
-    if (link) {
-      link.setAttribute('href', `primereact/resources/themes/${theme}/theme.css`);
-    }
-    saveData();
+  const handleThemeChange = (newTheme: ThemeType) => {
+    setTheme(newTheme);
   };
 
   if (!user) {
@@ -114,7 +101,7 @@ const ShopkeeperApp: React.FC = () => {
                   name="theme"
                   value="lara-light-indigo"
                   onChange={(e) => handleThemeChange(e.value)}
-                  checked={selectedTheme === 'lara-light-indigo'}
+                  checked={theme === 'lara-light-indigo'}
                 />
                 <label htmlFor="theme1" className="ml-2">Light</label>
               </div>
@@ -124,7 +111,7 @@ const ShopkeeperApp: React.FC = () => {
                   name="theme"
                   value="lara-dark-indigo"
                   onChange={(e) => handleThemeChange(e.value)}
-                  checked={selectedTheme === 'lara-dark-indigo'}
+                  checked={theme === 'lara-dark-indigo'}
                 />
                 <label htmlFor="theme2" className="ml-2">Dark</label>
               </div>

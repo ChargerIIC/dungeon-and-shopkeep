@@ -14,7 +14,7 @@ const HomePage: React.FC = () => {
           Create and manage your fantasy shop with ease, set custom prices, and keep track of your
           items from the Dungeons & Dragons universe.
         </p>
-        <p className="mt-3">
+        <span className="mt-3">
           Features:
           <ul>
             <li>Create and customize your shop</li>
@@ -22,7 +22,7 @@ const HomePage: React.FC = () => {
             <li>Multiple theme options</li>
             <li>Secure authentication</li>
           </ul>
-        </p>
+        </span>
         <Button
           label="Get Started"
           icon="pi pi-arrow-right"

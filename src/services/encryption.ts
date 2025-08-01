@@ -1,31 +1,72 @@
-// Simple encryption using AES
-// TODO: For production, consider using a more robust encryption library like crypto-js
+import CryptoJS from 'crypto-js';
 
-export function encrypt(text: string, key: string): string {
-  // Basic XOR encryption (NOT for production use)
-  const textToChars = (text: string) => text.split('').map(c => c.charCodeAt(0));
-  const byteHex = (n: number) => ("0" + Number(n).toString(16)).substr(-2);
-  const keyCharCodes = textToChars(key);
-  
-  const encoded = textToChars(text)
-    .map((textChar, index) => textChar ^ keyCharCodes[index % keyCharCodes.length])
-    .map(byteHex)
-    .join('');
-    
-  return btoa(encoded);
+// Secure encryption using AES-256
+const SALT_LENGTH = 16; // 128 bits
+const KEY_LENGTH = 32; // 256 bits
+const ITERATIONS = 10000;
+
+// Derive a secure key from the user's key using PBKDF2
+function deriveKey(key: string, salt: string): string {
+  return CryptoJS.PBKDF2(key, salt, {
+    keySize: KEY_LENGTH / 4, // keySize is in words (4 bytes each)
+    iterations: ITERATIONS
+  }).toString();
 }
 
-export function decrypt(encoded: string, key: string): string {
-  // Basic XOR decryption (NOT for production use)
-  const textToChars = (text: string) => text.split('').map(c => c.charCodeAt(0));
-  const keyCharCodes = textToChars(key);
-  
-  const decoded = atob(encoded);
-  
-  return decoded
-    .match(/.{1,2}/g)!
-    .map(hex => parseInt(hex, 16))
-    .map((textChar, index) => textChar ^ keyCharCodes[index % keyCharCodes.length])
-    .map(charCode => String.fromCharCode(charCode))
-    .join('');
+// Generate a random salt
+function generateSalt(): string {
+  return CryptoJS.lib.WordArray.random(SALT_LENGTH).toString();
+}
+
+export function encrypt(text: string, key: string): string {
+  try {
+    // Generate a random salt for each encryption
+    const salt = generateSalt();
+    // Derive a secure key using PBKDF2
+    const derivedKey = deriveKey(key, salt);
+    
+    // Encrypt the text using AES-256
+    const encrypted = CryptoJS.AES.encrypt(text, derivedKey, {
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7
+    });
+    
+    // Combine salt and encrypted data
+    // Format: salt:iv:encrypted
+    return `${salt}:${encrypted.iv}:${encrypted.ciphertext}`;
+  } catch (error) {
+    console.error('Encryption error:', error);
+    throw new Error('Failed to encrypt data');
+  }
+}
+
+export function decrypt(encryptedText: string, key: string): string {
+  try {
+    // Split the encrypted text into salt, IV, and ciphertext
+    const [salt, iv, ciphertext] = encryptedText.split(':');
+    
+    if (!salt || !iv || !ciphertext) {
+      throw new Error('Invalid encrypted data format');
+    }
+    
+    // Derive the same key using PBKDF2
+    const derivedKey = deriveKey(key, salt);
+    
+    // Reconstruct the CipherParams object
+    const cipherParams = CryptoJS.lib.CipherParams.create({
+      ciphertext: CryptoJS.enc.Hex.parse(ciphertext),
+      iv: CryptoJS.enc.Hex.parse(iv)
+    });
+    
+    // Decrypt the data
+    const decrypted = CryptoJS.AES.decrypt(cipherParams, derivedKey, {
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7
+    });
+    
+    return decrypted.toString(CryptoJS.enc.Utf8);
+  } catch (error) {
+    console.error('Decryption error:', error);
+    throw new Error('Failed to decrypt data');
+  }
 }

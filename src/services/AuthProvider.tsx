@@ -4,7 +4,7 @@ import {
     getAuth,
     signInWithPopup,
     GoogleAuthProvider,
-    FacebookAuthProvider,
+    // FacebookAuthProvider,
     signOut as firebaseSignOut,
     onAuthStateChanged,
     User,
@@ -26,7 +26,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
-const facebookProvider = new FacebookAuthProvider(); //TODO: Lets users choose between Google and Facebook for authentication
+// const facebookProvider = new FacebookAuthProvider(); //TODO: Lets users choose between Google and Facebook for authentication
 
 interface AuthContextType {
     user: User | null;
